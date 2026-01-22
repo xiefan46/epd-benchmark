@@ -15,44 +15,124 @@ epd/                              # Parent directory
     │   └── utils/                # Utilities (request generator, metrics)
     ├── configs/                  # Configuration files
     ├── scripts/                  # Shell scripts
+    ├── docker/                   # Docker files
     ├── results/                  # Benchmark results (auto-generated)
     └── logs/                     # Server logs (auto-generated)
 ```
 
 ## Quick Start
 
-### 1. Setup Development Environment
+### Option 1: Using Docker (Recommended for Remote Servers)
 
-This setup allows you to modify code in all three repositories:
+Use our pre-built Docker image with Miniconda:
 
 ```bash
-# Run the setup script
-./scripts/setup_dev_environment.sh
+# Pull the image
+docker pull xiefan46/epd-benchmark:latest
 
-# Activate the virtual environment
-source .venv/bin/activate
+# Run container (RunPod, etc.)
+# Image: xiefan46/epd-benchmark:latest
+
+# Inside the container, run setup
+./scripts/setup_remote_server.sh
 ```
 
-The setup installs all three packages in **editable mode** (`pip install -e`), meaning:
-- Changes to `epd-benchmark/src` take effect immediately
-- Changes to `vllm/` take effect immediately
-- Changes to `ElasticMM/` take effect immediately
+### Option 2: Local Setup with Conda
 
-### 2. Configure the Benchmark
+```bash
+# Clone the repository
+git clone https://github.com/xiefan46/epd-benchmark.git
+cd epd-benchmark
 
-Edit `configs/benchmark_config.yaml` to match your environment:
+# Run setup script (uses Conda)
+./scripts/setup_dev_environment.sh
+
+# Activate the environment
+conda activate epd
+```
+
+### Option 3: Using environment.yaml
+
+```bash
+# Create environment from file
+conda env create -f environment.yaml
+
+# Activate
+conda activate epd
+
+# Install in editable mode
+pip install -e .
+```
+
+## Docker Image
+
+### Using the Pre-built Image
+
+The Docker image `xiefan46/epd-benchmark` includes:
+- Base: `runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04`
+- Miniconda with `epd` environment pre-configured
+- Common dependencies pre-installed
+
+```bash
+# On RunPod or similar platforms
+# Set image to: xiefan46/epd-benchmark:latest
+
+# Inside the container
+conda activate epd
+cd /workspace
+git clone https://github.com/xiefan46/epd-benchmark.git
+./epd-benchmark/scripts/setup_remote_server.sh
+```
+
+### Building Your Own Image
+
+```bash
+cd docker
+./build_and_push.sh latest
+```
+
+## Remote Server Setup (RunPod, etc.)
+
+### One-liner Setup
+
+```bash
+curl -sSL https://raw.githubusercontent.com/xiefan46/epd-benchmark/main/scripts/setup_remote_server.sh | bash
+```
+
+### Manual Setup
+
+```bash
+# 1. Activate conda environment
+conda activate epd
+
+# 2. Clone repositories
+cd /workspace
+git clone https://github.com/vllm-project/vllm.git
+git clone https://github.com/xiefan46/ElasticMM.git  # Your ElasticMM fork
+git clone https://github.com/xiefan46/epd-benchmark.git
+
+# 3. Install in editable mode
+pip install -e vllm
+pip install -e ElasticMM
+pip install -e epd-benchmark
+
+# 4. Run benchmark
+cd epd-benchmark
+epd-bench run --vllm-path ../vllm --elasticmm-path ../ElasticMM
+```
+
+## Configuration
+
+Edit `configs/benchmark_config.yaml`:
 
 ```yaml
-# Model to use
 model:
   name: "Qwen/Qwen2.5-VL-3B-Instruct"
 
-# Dataset paths
 dataset:
   image_dir: "/path/to/your/images"
   text_data_path: "/path/to/conversations.jsonl"
 
-# GPU assignment
 gpus:
   vllm:
     encoder: 0
@@ -61,17 +141,11 @@ gpus:
   elasticmm:
     text_gpus: 1
     multimodal_gpus: 3
-```
 
-### 3. Run Benchmarks
-
-```bash
-# Run comparison on both frameworks
-./scripts/run_benchmark.sh
-
-# Or run individually
-./scripts/run_benchmark.sh --framework vllm
-./scripts/run_benchmark.sh --framework elasticmm
+workload:
+  duration_seconds: 600
+  text_base_rate: 30.0
+  multimodal_base_rate: 20.0
 ```
 
 ## Usage
@@ -99,8 +173,6 @@ epd-bench compare results/vllm_run_0_summary.json results/elasticmm_run_0_summar
 
 ### Standalone Server Scripts
 
-For manual testing or debugging:
-
 ```bash
 # Start vLLM EPD servers (1E1P1D configuration)
 ./scripts/run_vllm_standalone.sh
@@ -113,7 +185,7 @@ For manual testing or debugging:
 
 ```python
 import asyncio
-from epd_benchmark import load_config, DynamicRequestGenerator, MetricsCollector
+from epd_benchmark import load_config, DynamicRequestGenerator
 from epd_benchmark.benchmarks import BenchmarkRunner
 
 # Load configuration
@@ -145,109 +217,64 @@ stats = asyncio.run(generator.run(
 
 ## Managing Three Repositories
 
-The recommended workflow for managing vLLM, ElasticMM, and this benchmark project:
-
 ### Directory Layout
 
 ```
-epd/
-├── vllm/           # git clone of vLLM
-├── ElasticMM/      # git clone of ElasticMM
-└── epd-benchmark/  # This project
-```
-
-### Git Management
-
-Each repository is managed independently:
-
-```bash
-# Work on vLLM
-cd epd/vllm
-git checkout -b my-feature
-# ... make changes ...
-git commit -m "My vLLM changes"
-
-# Work on ElasticMM
-cd epd/ElasticMM
-git checkout -b my-feature
-# ... make changes ...
-git commit -m "My ElasticMM changes"
-
-# Work on benchmark
-cd epd/epd-benchmark
-git checkout -b my-feature
-# ... make changes ...
-git commit -m "My benchmark changes"
+/workspace/                # Or ~/epd/
+├── vllm/                  # git clone of vLLM
+├── ElasticMM/             # git clone of ElasticMM
+└── epd-benchmark/         # This project
 ```
 
 ### Editable Installs
 
-After running `setup_dev_environment.sh`, all three packages are installed in editable mode:
-
-- **vLLM**: `pip install -e ../vllm`
-- **ElasticMM**: `pip install -e ../ElasticMM`
-- **epd-benchmark**: `pip install -e .`
+All packages are installed in editable mode:
+- `pip install -e vllm`
+- `pip install -e ElasticMM`
+- `pip install -e epd-benchmark`
 
 This means:
-1. You can modify source code in any of the three repos
-2. Changes take effect immediately (no reinstall needed)
-3. You can set breakpoints and debug across all three codebases
+1. Modify source code in any repo
+2. Changes take effect immediately
+3. Debug across all three codebases
 4. Each repo maintains its own git history
-
-### Recommended IDE Setup
-
-Configure your IDE to treat all three directories as a multi-root workspace:
-
-**VSCode** (`.vscode/settings.json`):
-```json
-{
-  "python.analysis.extraPaths": [
-    "../vllm",
-    "../ElasticMM",
-    "./src"
-  ]
-}
-```
 
 ## Benchmark Metrics
 
 The benchmark collects and compares:
 
-- **Throughput**: Requests per second
-- **Latency**: Average, P50, P90, P95, P99
-- **Time to First Token (TTFT)**: For streaming requests
-- **Token Throughput**: Tokens per second
-- **Success Rate**: Successful vs failed requests
-- **Workload Breakdown**: Text vs multimodal requests
+| Metric | Description |
+|--------|-------------|
+| Throughput | Requests per second |
+| Latency | Average, P50, P90, P95, P99 |
+| TTFT | Time to First Token |
+| Token Throughput | Tokens per second |
+| Success Rate | Successful vs failed requests |
 
-Results are saved to `results/` in JSON and CSV formats for further analysis.
-
-## Configuration Options
-
-See `configs/benchmark_config.yaml` for all available options:
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `model.name` | Model to benchmark | Qwen/Qwen2.5-VL-3B-Instruct |
-| `workload.duration_seconds` | Benchmark duration | 600 |
-| `workload.text_base_rate` | Text requests/second | 30.0 |
-| `workload.multimodal_base_rate` | MM requests/second | 20.0 |
-| `benchmark.warmup_seconds` | Warmup period | 30 |
-| `benchmark.num_runs` | Number of runs | 3 |
+Results are saved to `results/` in JSON and CSV formats.
 
 ## Troubleshooting
 
 ### vLLM won't start
 - Check GPU availability: `nvidia-smi`
-- Check logs in `logs/encoder_*.log`, `logs/prefill_*.log`, `logs/decode_*.log`
-- Ensure the model is downloaded
+- Check logs: `tail -f logs/encoder_*.log`
+- Ensure model is downloaded
 
 ### ElasticMM won't start
-- Ensure Ray is not already running: `ray stop`
-- Check if ports are available
-- Review ElasticMM logs
+- Stop existing Ray: `ray stop`
+- Check port availability
+- Review logs
+
+### Conda environment issues
+```bash
+# Recreate environment
+conda env remove -n epd
+conda env create -f environment.yaml
+```
 
 ### Import errors
-- Ensure you've run `setup_dev_environment.sh`
-- Ensure the virtual environment is activated
-- Try reinstalling: `pip install -e .`
+```bash
+# Reinstall in editable mode
+conda activate epd
+pip install -e .
+```
