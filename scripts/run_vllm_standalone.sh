@@ -16,7 +16,7 @@ VLLM_PATH="$EPD_ROOT/vllm"
 
 # Configuration - override via environment variables
 MODEL="${MODEL:-Qwen/Qwen2.5-VL-3B-Instruct}"
-LOG_PATH="${LOG_PATH:-$PROJECT_ROOT/logs}"
+LOG_PATH="${LOG_PATH:-/workspace/logs}"
 mkdir -p "$LOG_PATH"
 
 ENCODE_PORT="${ENCODE_PORT:-19534}"
@@ -28,7 +28,7 @@ GPU_E="${GPU_E:-0}"
 GPU_P="${GPU_P:-1}"
 GPU_D="${GPU_D:-2}"
 
-EC_SHARED_STORAGE_PATH="${EC_SHARED_STORAGE_PATH:-/tmp/ec_cache}"
+EC_SHARED_STORAGE_PATH="${EC_SHARED_STORAGE_PATH:-/workspace/ec_cache}"
 
 declare -a PIDS=()
 
