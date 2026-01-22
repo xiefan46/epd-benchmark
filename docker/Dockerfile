@@ -7,35 +7,22 @@ FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 LABEL maintainer="fxie46"
 LABEL description="PyTorch + CUDA + Miniconda for EPD benchmarking"
 
-# Avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wget \
-    curl \
-    git \
-    vim \
-    htop \
-    tmux \
+    wget curl git vim htop tmux \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Miniconda and create epd environment in one layer
-RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh \
-    && bash /tmp/miniconda.sh -b -p /opt/conda \
-    && rm /tmp/miniconda.sh \
-    && /opt/conda/bin/conda init bash \
-    && /opt/conda/bin/conda config --set auto_activate_base false \
-    && /opt/conda/bin/conda create -n epd python=3.11 -y \
-    && /opt/conda/bin/conda clean -afy \
-    && echo "source /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc \
-    && echo "conda activate epd" >> ~/.bashrc
+# Install Miniconda
+RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh \
+    && bash ~/miniconda.sh -b -p /opt/conda \
+    && rm ~/miniconda.sh
 
-# Setup conda in PATH
 ENV PATH="/opt/conda/bin:${PATH}"
 
-# Set working directory
-WORKDIR /workspace
+RUN conda init bash \
+    && conda config --set auto_activate_base false
 
-# Default command
+WORKDIR /workspace
 CMD ["/bin/bash"]
