@@ -21,22 +21,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Miniconda
-ENV CONDA_DIR=/opt/conda
-ENV PATH="${CONDA_DIR}/bin:${PATH}"
-
 RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh \
-    && bash /tmp/miniconda.sh -b -p ${CONDA_DIR} \
-    && rm /tmp/miniconda.sh \
-    && ${CONDA_DIR}/bin/conda init bash \
-    && ${CONDA_DIR}/bin/conda config --set auto_activate_base false \
-    && ${CONDA_DIR}/bin/conda clean -afy
+    && bash /tmp/miniconda.sh -b -p /opt/conda \
+    && rm /tmp/miniconda.sh
+
+# Setup conda
+ENV PATH="/opt/conda/bin:${PATH}"
+
+RUN conda init bash \
+    && conda config --set auto_activate_base false \
+    && conda clean -afy
 
 # Create conda environment for EPD benchmark
-RUN ${CONDA_DIR}/bin/conda create -n epd python=3.11 -y \
-    && ${CONDA_DIR}/bin/conda clean -afy
+RUN conda create -n epd python=3.11 -y \
+    && conda clean -afy
 
 # Add conda activation to bashrc
-RUN echo "source ${CONDA_DIR}/etc/profile.d/conda.sh" >> ~/.bashrc \
+RUN echo "source /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc \
     && echo "conda activate epd" >> ~/.bashrc
 
 # Set working directory
