@@ -20,25 +20,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tmux \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Miniconda
+# Install Miniconda and create epd environment in one layer
 RUN wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/miniconda.sh \
     && bash /tmp/miniconda.sh -b -p /opt/conda \
-    && rm /tmp/miniconda.sh
-
-# Setup conda
-ENV PATH="/opt/conda/bin:${PATH}"
-
-RUN conda init bash \
-    && conda config --set auto_activate_base false \
-    && conda clean -afy
-
-# Create conda environment for EPD benchmark
-RUN conda create -n epd python=3.11 -y \
-    && conda clean -afy
-
-# Add conda activation to bashrc
-RUN echo "source /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc \
+    && rm /tmp/miniconda.sh \
+    && /opt/conda/bin/conda init bash \
+    && /opt/conda/bin/conda config --set auto_activate_base false \
+    && /opt/conda/bin/conda create -n epd python=3.11 -y \
+    && /opt/conda/bin/conda clean -afy \
+    && echo "source /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc \
     && echo "conda activate epd" >> ~/.bashrc
+
+# Setup conda in PATH
+ENV PATH="/opt/conda/bin:${PATH}"
 
 # Set working directory
 WORKDIR /workspace
