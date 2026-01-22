@@ -15,8 +15,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TAG="${1:-latest}"
 
-# Docker Hub username - change this to your username
-DOCKER_USER="${DOCKER_USER:-xiefan46}"
+# Docker Hub username
+DOCKER_USER="${DOCKER_USER:-fxie46}"
 IMAGE_NAME="epd-benchmark"
 FULL_IMAGE_NAME="${DOCKER_USER}/${IMAGE_NAME}:${TAG}"
 

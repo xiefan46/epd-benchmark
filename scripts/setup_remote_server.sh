@@ -23,7 +23,7 @@ echo ""
 # Check if conda is available
 if ! command -v conda &> /dev/null; then
     echo "ERROR: Conda not found. Please use the Docker image with Miniconda."
-    echo "       xiefan46/epd-benchmark:latest"
+    echo "       fxie46/epd-benchmark:latest"
     exit 1
 fi
 

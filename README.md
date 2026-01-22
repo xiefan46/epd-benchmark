@@ -28,10 +28,10 @@ Use our pre-built Docker image with Miniconda:
 
 ```bash
 # Pull the image
-docker pull xiefan46/epd-benchmark:latest
+docker pull fxie46/epd-benchmark:latest
 
 # Run container (RunPod, etc.)
-# Image: xiefan46/epd-benchmark:latest
+# Image: fxie46/epd-benchmark:latest
 
 # Inside the container, run setup
 ./scripts/setup_remote_server.sh
@@ -68,14 +68,14 @@ pip install -e .
 
 ### Using the Pre-built Image
 
-The Docker image `xiefan46/epd-benchmark` includes:
+The Docker image `fxie46/epd-benchmark` includes:
 - Base: `runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04`
 - Miniconda with `epd` environment pre-configured
 - Common dependencies pre-installed
 
 ```bash
 # On RunPod or similar platforms
-# Set image to: xiefan46/epd-benchmark:latest
+# Set image to: fxie46/epd-benchmark:latest
 
 # Inside the container
 conda activate epd
